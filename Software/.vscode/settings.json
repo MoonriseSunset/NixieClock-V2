@@ -4,7 +4,7 @@
     "files.associations": {
         "*.ino": "cpp"
     },
-    "particle.firmwareVersion": "6.2.1",
+    "particle.firmwareVersion": "3.3.1",
     "particle.targetPlatform": "photon",
-    "particle.targetDevice": "Nixie Clock"
+    "particle.targetDevice": "Nixie_Clock"
 }
