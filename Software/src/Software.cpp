@@ -1,7 +1,7 @@
 /*
 * NIXIE CLOCK ITERATION 2 MAINCODE
 * Author: MoonriseSunset
-* Last Modified: 3/14/2025
+* Last Modified: 3/16/2025
 */
 
 // Include Particle libraries (needed for RTC and Wifi)
@@ -24,6 +24,9 @@ const int CLK_DELAY = 400;
 //set level of debugging, 0 for nothing, 1 for high level functions, 2 for everything
 const int DEBUG = 0;
 
+//enable/disable oscilloscope trigger, 0 is disabled, 1 is enabled
+const int EN_OSC = 1;
+
 // 24-hour mode, 0 is disabled, 1 is enabled
 const int HOUR_FORMAT = 0;
 
@@ -40,7 +43,11 @@ int seconds = -1, minutes = -1, hours = -1;
 //On nano every, dataline was on pin 12, on photon the data pin is now D6
 const int DATA_LINE = 6;
 
+//Oscilloscope trigger pin for debugging
+const int SCOPE_TRIGGER = 5;
 
+//Debug indicator LED
+const int DEBUG_INDICATOR = 7;
 
 // Function declarations ---------------------------------------------
 //NOTE: To find the definitions, scroll past the MAIN LOOP
@@ -79,6 +86,18 @@ void setup() {
 
   // Set timezone offset
   Time.zone(-7);
+
+  //Initialize pins
+  pinMode(DATA_LINE, OUTPUT);
+
+  //if using the oscilloscope trigger, set it to low, and indicate we are in debug mode using builtin LED on pin 7
+  if(EN_OSC == 1){
+    pinMode(SCOPE_TRIGGER, OUTPUT);
+    pinMode(DEBUG_INDICATOR, OUTPUT);
+
+    digitalWrite(SCOPE_TRIGGER, LOW);
+    digitalWrite(DEBUG_INDICATOR, HIGH);
+  }
 
 }
 
@@ -239,6 +258,8 @@ void writeOut(char address, int timeData){
   //p being the index or "place value" in our splitNumber array
   for(int p = 1; p > -1; p--){
 
+    if(EN_OSC == 1) digitalWrite(SCOPE_TRIGGER, HIGH);               //Set oscilloscope trigger to high while we do a transmission
+
     //Prepare data line for transmitting the ones data to desired chip
     clearDataline();
     setAddress(address); 
@@ -258,8 +279,11 @@ void writeOut(char address, int timeData){
 
     endFrame();
 
+    if(EN_OSC == 1 && p == 0) digitalWrite(SCOPE_TRIGGER, LOW);               //drop trigger to low when done with transmission, ignoring when we need to do an end transmission
   }
   
   // Now that we're done sending data, end the transmission
   endTransmission();
+
+  if(EN_OSC == 1) digitalWrite(SCOPE_TRIGGER, HIGH);               //drop trigger to low when completely done with data transfer
 }
